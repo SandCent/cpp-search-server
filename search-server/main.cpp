@@ -67,7 +67,7 @@ public:
     void AddDocument(int document_id, const string& document) {
         vector<string> docs = SplitIntoWordsNoStop(document);
         for (const string& doc : docs) {
-            doc_freq[doc][document_id] += 1./docs.size();
+            doc_freq[doc][document_id] += 1. / docs.size();
         }
         ++document_count_;
     }
@@ -109,7 +109,8 @@ private:
         for (const string& word : SplitIntoWordsNoStop(text)) {
             if (word[0] == '-') {
                 query_words.minus_words.insert(word.substr(1));
-            } else {
+            }
+            else {
                 query_words.plus_words.insert(word);
             }
 
@@ -117,18 +118,22 @@ private:
         return query_words;
     }
 
+    double CalcIdf (const string& text) const {
+        int coun_num = doc_freq.at(text).size();
+        double idf_calc;
+        idf_calc = log(static_cast<double> (document_count_) / static_cast<double>(coun_num));
+        return idf_calc;
+    }
+
     vector<Document> FindAllDocuments(const Query& query_words) const {
         vector<Document> matched_documents;
         map <int, double> id_and_relevance;
-        double idf;
-        int count_num = 0;
         for (const string& word : query_words.plus_words) {
             if (doc_freq.count(word) != 0) {
-                count_num = doc_freq.at(word).size();
-                idf = log(static_cast<double> (document_count_) / static_cast<double>(count_num));
-                for (const auto& res :doc_freq.at(word)) {
+                double idf = CalcIdf(word);
+                for (const auto& res : doc_freq.at(word)) {
                     id_and_relevance[res.first] += idf * res.second;
-            }    
+                }
             }
         }
         for (const string& word_minus : query_words.minus_words) {
@@ -139,7 +144,7 @@ private:
             }
         }
         for (const auto& result : id_and_relevance) {
-                matched_documents.push_back({ result.first, result.second });
+            matched_documents.push_back({ result.first, result.second });
         }
         return matched_documents;
     }
